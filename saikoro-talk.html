@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サイコロトーク</title>
+<style>
+:root{
+  --bg1:#fef6f0;--bg2:#e8f3fb;--accent:#ff9aa2;--accent2:#ffb7b2;
+  --blue:#a0d8ef;--blue-d:#6fb7dd;--text:#5a5a6e;--card:#ffffff;
+  --shadow:0 10px 30px rgba(120,120,150,.15);
+  --green:#9ad6b3;--gray:#cfcfd8;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:"Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  color:var(--text);min-height:100vh;padding:20px 16px 60px;
+  display:flex;flex-direction:column;align-items:center;
+}
+h1{font-size:1.6rem;margin:10px 0 4px;color:#7a7a90;letter-spacing:.05em;}
+.subtitle{font-size:.85rem;color:#a0a0b5;margin-bottom:24px;}
+.container{width:100%;max-width:520px;}
+.stage{
+  perspective:900px;height:240px;display:flex;align-items:center;
+  justify-content:center;margin-bottom:20px;
+}
+.cube{
+  position:relative;width:120px;height:120px;
+  transform-style:preserve-3d;transform:rotateX(0deg) rotateY(0deg);
+}
+.face{
+  position:absolute;width:120px;height:120px;background:var(--card);
+  border:2px solid #ffe3df;border-radius:18px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  padding:14px;gap:4px;
+}
+.pip{width:18px;height:18px;background:var(--accent);border-radius:50%;align-self:center;justify-self:center;}
+.f1{transform:rotateY(0deg) translateZ(60px);}
+.f2{transform:rotateY(90deg) translateZ(60px);}
+.f3{transform:rotateY(180deg) translateZ(60px);}
+.f4{transform:rotateY(-90deg) translateZ(60px);}
+.f5{transform:rotateX(90deg) translateZ(60px);}
+.f6{transform:rotateX(-90deg) translateZ(60px);}
+.p1{grid-column:2;grid-row:2;}
+.d2 .pip:nth-child(1){grid-column:1;grid-row:1;}.d2 .pip:nth-child(2){grid-column:3;grid-row:3;}
+.d3 .pip:nth-child(1){grid-column:1;grid-row:1;}.d3 .pip:nth-child(2){grid-column:2;grid-row:2;}.d3 .pip:nth-child(3){grid-column:3;grid-row:3;}
+.d4 .pip:nth-child(1){grid-column:1;grid-row:1;}.d4 .pip:nth-child(2){grid-column:3;grid-row:1;}.d4 .pip:nth-child(3){grid-column:1;grid-row:3;}.d4 .pip:nth-child(4){grid-column:3;grid-row:3;}
+.d5 .pip:nth-child(1){grid-column:1;grid-row:1;}.d5 .pip:nth-child(2){grid-column:3;grid-row:1;}.d5 .pip:nth-child(3){grid-column:2;grid-row:2;}.d5 .pip:nth-child(4){grid-column:1;grid-row:3;}.d5 .pip:nth-child(5){grid-column:3;grid-row:3;}
+.d6 .pip:nth-child(1){grid-column:1;grid-row:1;}.d6 .pip:nth-child(2){grid-column:3;grid-row:1;}.d6 .pip:nth-child(3){grid-column:1;grid-row:2;}.d6 .pip:nth-child(4){grid-column:3;grid-row:2;}.d6 .pip:nth-child(5){grid-column:1;grid-row:3;}.d6 .pip:nth-child(6){grid-column:3;grid-row:3;}
+.topic-card{
+  background:var(--card);border-radius:22px;box-shadow:var(--shadow);
+  padding:28px 22px;text-align:center;min-height:120px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  margin-bottom:22px;
+}
+.topic-num{font-size:.8rem;color:var(--blue-d);font-weight:bold;margin-bottom:10px;letter-spacing:.1em;}
+.topic-text{font-size:1.5rem;line-height:2.4;font-weight:bold;color:#5a5a6e;}
+.topic-text ruby rt{font-size:.5em;color:#9a9ab0;font-weight:normal;}
+.topic-placeholder{color:#bcbccf;font-size:1.1rem;}
+.fade-in{animation:fadeIn .5s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.btn-row{display:flex;gap:12px;margin-bottom:14px;}
+button{
+  font-family:inherit;font-size:1.05rem;font-weight:bold;border:none;
+  border-radius:16px;padding:16px;cursor:pointer;color:#fff;
+  transition:transform .1s ease,box-shadow .2s ease,opacity .2s;
+}
+button:active{transform:scale(.95);}
+.roll-btn{flex:2;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 16px rgba(255,154,162,.4);}
+.reset-btn{flex:1;background:linear-gradient(135deg,var(--blue),var(--blue-d));box-shadow:0 6px 16px rgba(111,183,221,.35);}
+.roll-btn:disabled{background:var(--gray);box-shadow:none;cursor:not-allowed;opacity:.7;}
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border-radius:16px;padding:14px 18px;margin-bottom:14px;box-shadow:var(--shadow);
+}
+.toggle-row span{font-size:.95rem;}
+.switch{position:relative;width:52px;height:30px;}
+.switch input{display:none;}
+.slider{position:absolute;inset:0;background:var(--gray);border-radius:30px;transition:.3s;}
+.slider::before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;}
+.switch input:checked+.slider{background:var(--green);}
+.switch input:checked+.slider::before{transform:translateX(22px);}
+.history{font-size:.8rem;color:#a0a0b5;text-align:center;margin-bottom:20px;min-height:1.2em;}
+.editor-toggle{
+  width:100%;background:none;color:var(--blue-d);box-shadow:none;
+  border:2px dashed #cfe4f2;border-radius:14px;font-size:.95rem;
+}
+.editor{display:none;margin-top:14px;background:var(--card);border-radius:18px;padding:18px;box-shadow:var(--shadow);}
+.editor.open{display:block;animation:fadeIn .3s ease;}
+.edit-item{margin-bottom:16px;}
+.edit-item label{display:block;font-size:.85rem;font-weight:bold;color:var(--blue-d);margin-bottom:6px;}
+.edit-item input{
+  width:100%;border:1.5px solid #e6e6ef;border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:.95rem;color:var(--text);margin-bottom:6px;outline:none;
+}
+.edit-item input:focus{border-color:var(--blue);}
+.edit-item .ruby-input{background:#f8fbfe;}
+.save-note{font-size:.75rem;color:#a0a0b5;text-align:center;margin-top:4px;}
+</style>
+</head>
+<body>
+<h1>🎲 サイコロトーク</h1>
+<p class="subtitle">サイコロを振って、出た目のお題で話そう！</p>
+
+<div class="container">
+  <div class="stage">
+    <div class="cube" id="cube">
+      <div class="face f1 d1"><div class="pip p1"></div></div>
+      <div class="face f2 d2"><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f3 d3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f4 d4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f5 d5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f6 d6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+    </div>
+  </div>
+
+  <div class="topic-card">
+    <div class="topic-num" id="topicNum"></div>
+    <div class="topic-text" id="topicText"><span class="topic-placeholder">「振る」を押してね</span></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="roll-btn" id="rollBtn">振る！</button>
+    <button class="reset-btn" id="resetBtn">リセット</button>
+  </div>
+
+  <div class="toggle-row">
+    <span>6回重複なしモード</span>
+    <label class="switch">
+      <input type="checkbox" id="uniqueToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-row">
+    <span>🔊 効果音</span>
+    <label class="switch">
+      <input type="checkbox" id="soundToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="history" id="historyText"></div>
+
+  <button class="editor-toggle" id="editorToggle">✏️ お題を編集する</button>
+  <div class="editor" id="editor"></div>
+</div>
+
+<script>
+const defaults = [
+  {body:"好きな音楽", ruby:"すきなおんがく"},
+  {body:"好きな給食", ruby:"すきなきゅうしょく"},
+  {body:"校外学習で行きたい場所", ruby:"こうがいがくしゅうでいきたいばしょ"},
+  {body:"前期実習で楽しかった仕事", ruby:"ぜんきじっしゅうでたのしかったしごと"},
+  {body:"友達のいいところ", ruby:"ともだちのいいところ"},
+  {body:"自分の好きな所", ruby:"じぶんのすきなところ"},
+];
+
+let topics = loadTopics();
+let uniqueMode = JSON.parse(localStorage.getItem("dt_unique")||"false");
+let soundOn = JSON.parse(localStorage.getItem("dt_sound")||"true");
+let used = [];
+let rolling = false;
+
+function loadTopics(){
+  try{
+    const s = JSON.parse(localStorage.getItem("dt_topics"));
+    if(Array.isArray(s)&&s.length===6) return s;
+  }catch(e){}
+  return JSON.parse(JSON.stringify(defaults));
+}
+function saveTopics(){localStorage.setItem("dt_topics",JSON.stringify(topics));}
+
+function renderRuby(body, ruby){
+  if(!body) return '<span class="topic-placeholder">（お題未設定）</span>';
+  if(!ruby) return escapeHtml(body);
+  return '<ruby>'+escapeHtml(body)+'<rt>'+escapeHtml(ruby)+'</rt></ruby>';
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+let audioCtx;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended") audioCtx.resume();
+  return audioCtx;
+}
+function playRollSound(duration){
+  if(!soundOn) return;
+  const ctx=getCtx(), end=ctx.currentTime+duration;
+  let t=ctx.currentTime, gap=0.045;
+  while(t<end){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type="square"; o.frequency.value=110+Math.random()*220;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.12,t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t+0.05);
+    gap=Math.min(gap*1.13,0.4);
+    t+=gap;
+  }
+}
+function playDingSound(){
+  if(!soundOn) return;
+  const ctx=getCtx();
+  [660,990].forEach((f,i)=>{
+    const o=ctx.createOscillator(), g=ctx.createGain(), t=ctx.currentTime+i*0.12;
+    o.type="sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t+0.5);
+  });
+}
+
+const faceRot = {
+  1:{x:0,   y:0},
+  2:{x:0,   y:-90},
+  3:{x:0,   y:180},
+  4:{x:0,   y:90},
+  5:{x:-90, y:0},
+  6:{x:90,  y:0}
+};
+
+const cube = document.getElementById("cube");
+const rollBtn = document.getElementById("rollBtn");
+const resetBtn = document.getElementById("resetBtn");
+const topicText = document.getElementById("topicText");
+const topicNum = document.getElementById("topicNum");
+const uniqueToggle = document.getElementById("uniqueToggle");
+const soundToggle = document.getElementById("soundToggle");
+const historyText = document.getElementById("historyText");
+
+function pickNumber(){
+  if(uniqueMode){
+    const remain=[1,2,3,4,5,6].filter(n=>!used.includes(n));
+    return remain[Math.floor(Math.random()*remain.length)];
+  }
+  return Math.floor(Math.random()*6)+1;
+}
+
+const SPIN_MS = 2600;
+
+function roll(){
+  if(rolling) return;
+  const result = pickNumber();
+  if(!result) return;
+  rolling=true;
+  rollBtn.disabled=true;
+  topicNum.textContent="";
+  topicText.innerHTML='<span class="topic-placeholder">…</span>';
+
+  getCtx();
+  playRollSound(SPIN_MS/1000);
+
+  const spinX = 360*4 + faceRot[result].x;
+  const spinY = 360*4 + faceRot[result].y;
+  cube.style.transition="transform "+SPIN_MS+"ms cubic-bezier(.2,.85,.2,1)";
+  cube.style.transform="rotateX("+spinX+"deg) rotateY("+spinY+"deg)";
+
+  setTimeout(()=>{
+    cube.style.transition="none";
+    cube.style.transform="rotateX("+faceRot[result].x+"deg) rotateY("+faceRot[result].y+"deg)";
+    playDingSound();
+    showTopic(result);
+    rolling=false;
+    if(uniqueMode){
+      used.push(result);
+      updateHistory();
+      if(used.length>=6){rollBtn.disabled=true;rollBtn.textContent="出尽くした！";}
+      else rollBtn.disabled=false;
+    }else{
+      rollBtn.disabled=false;
+    }
+  },SPIN_MS);
+}
+
+function showTopic(n){
+  const t=topics[n-1];
+  topicNum.textContent="〜 出た目 "+n+" 〜";
+  topicText.innerHTML=renderRuby(t.body,t.ruby);
+  topicText.classList.remove("fade-in");void topicText.offsetWidth;topicText.classList.add("fade-in");
+}
+
+function reset(){
+  used=[];
+  rollBtn.disabled=false;
+  rollBtn.textContent="振る！";
+  topicNum.textContent="";
+  topicText.innerHTML='<span class="topic-placeholder">「振る」を押してね</span>';
+  updateHistory();
+}
+
+function updateHistory(){
+  historyText.textContent = uniqueMode ? "出た目: "+(used.length>0?used.join(" , "):"なし")+"（"+used.length+"/6）" : "";
+}
+
+rollBtn.addEventListener("click",roll);
+resetBtn.addEventListener("click",reset);
+uniqueToggle.addEventListener("change",()=>{
+  uniqueMode=uniqueToggle.checked;
+  localStorage.setItem("dt_unique",JSON.stringify(uniqueMode));
+  reset();
+});
+soundToggle.addEventListener("change",()=>{
+  soundOn=soundToggle.checked;
+  localStorage.setItem("dt_sound",JSON.stringify(soundOn));
+  if(soundOn){ getCtx(); playDingSound(); }
+});
+
+const editor=document.getElementById("editor");
+document.getElementById("editorToggle").addEventListener("click",()=>editor.classList.toggle("open"));
+
+function buildEditor(){
+  editor.innerHTML="";
+  topics.forEach((t,i)=>{
+    const div=document.createElement("div");
+    div.className="edit-item";
+    div.innerHTML=
+      '<label>出目 '+(i+1)+'</label>'+
+      '<input type="text" data-i="'+i+'" data-k="body" value="'+escapeHtml(t.body)+'" placeholder="お題（本文）">'+
+      '<input type="text" class="ruby-input" data-i="'+i+'" data-k="ruby" value="'+escapeHtml(t.ruby)+'" placeholder="ふりがな">';
+    editor.appendChild(div);
+  });
+  const note=document.createElement("div");
+  note.className="save-note";note.textContent="入力内容は自動保存されます";
+  editor.appendChild(note);
+  editor.querySelectorAll("input").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      topics[e.target.dataset.i][e.target.dataset.k]=e.target.value;
+      saveTopics();
+    });
+  });
+}
+
+uniqueToggle.checked=uniqueMode;
+soundToggle.checked=soundOn;
+buildEditor();
+updateHistory();
+</script>
+</body>
+</html>
