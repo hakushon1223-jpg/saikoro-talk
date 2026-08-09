@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>サイコロトーク</title>
+<style>
+:root{
+  --bg1:#fef6f0;--bg2:#e8f3fb;--accent:#ff9aa2;--accent2:#ffb7b2;
+  --blue:#a0d8ef;--blue-d:#6fb7dd;--text:#5a5a6e;--card:#ffffff;
+  --shadow:0 10px 30px rgba(120,120,150,.15);
+  --green:#9ad6b3;--gray:#cfcfd8;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{
+  font-family:"Hiragino Kaku Gothic ProN","Meiryo",sans-serif;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2));
+  color:var(--text);min-height:100vh;padding:20px 16px 60px;
+  display:flex;flex-direction:column;align-items:center;
+}
+h1{font-size:1.6rem;margin:10px 0 4px;color:#7a7a90;letter-spacing:.05em;}
+.subtitle{font-size:.85rem;color:#a0a0b5;margin-bottom:24px;}
+.container{width:100%;max-width:520px;}
+.stage{
+  perspective:900px;height:240px;display:flex;align-items:center;
+  justify-content:center;margin-bottom:20px;
+}
+.cube{
+  position:relative;width:120px;height:120px;
+  transform-style:preserve-3d;transform:rotateX(0deg) rotateY(0deg);
+}
+.face{
+  position:absolute;width:120px;height:120px;background:var(--card);
+  border:2px solid #ffe3df;border-radius:18px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);
+  padding:14px;gap:4px;
+}
+.pip{width:18px;height:18px;background:var(--accent);border-radius:50%;align-self:center;justify-self:center;}
+.f1{transform:rotateY(0deg) translateZ(60px);}
+.f2{transform:rotateY(90deg) translateZ(60px);}
+.f3{transform:rotateY(180deg) translateZ(60px);}
+.f4{transform:rotateY(-90deg) translateZ(60px);}
+.f5{transform:rotateX(90deg) translateZ(60px);}
+.f6{transform:rotateX(-90deg) translateZ(60px);}
+.p1{grid-column:2;grid-row:2;}
+.d2 .pip:nth-child(1){grid-column:1;grid-row:1;}.d2 .pip:nth-child(2){grid-column:3;grid-row:3;}
+.d3 .pip:nth-child(1){grid-column:1;grid-row:1;}.d3 .pip:nth-child(2){grid-column:2;grid-row:2;}.d3 .pip:nth-child(3){grid-column:3;grid-row:3;}
+.d4 .pip:nth-child(1){grid-column:1;grid-row:1;}.d4 .pip:nth-child(2){grid-column:3;grid-row:1;}.d4 .pip:nth-child(3){grid-column:1;grid-row:3;}.d4 .pip:nth-child(4){grid-column:3;grid-row:3;}
+.d5 .pip:nth-child(1){grid-column:1;grid-row:1;}.d5 .pip:nth-child(2){grid-column:3;grid-row:1;}.d5 .pip:nth-child(3){grid-column:2;grid-row:2;}.d5 .pip:nth-child(4){grid-column:1;grid-row:3;}.d5 .pip:nth-child(5){grid-column:3;grid-row:3;}
+.d6 .pip:nth-child(1){grid-column:1;grid-row:1;}.d6 .pip:nth-child(2){grid-column:3;grid-row:1;}.d6 .pip:nth-child(3){grid-column:1;grid-row:2;}.d6 .pip:nth-child(4){grid-column:3;grid-row:2;}.d6 .pip:nth-child(5){grid-column:1;grid-row:3;}.d6 .pip:nth-child(6){grid-column:3;grid-row:3;}
+.topic-card{
+  background:var(--card);border-radius:22px;box-shadow:var(--shadow);
+  padding:28px 22px;text-align:center;min-height:120px;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  margin-bottom:22px;
+}
+.topic-num{font-size:.8rem;color:var(--blue-d);font-weight:bold;margin-bottom:10px;letter-spacing:.1em;}
+.topic-text{font-size:1.5rem;line-height:2.4;font-weight:bold;color:#5a5a6e;}
+.topic-text ruby rt{font-size:.5em;color:#9a9ab0;font-weight:normal;}
+.topic-placeholder{color:#bcbccf;font-size:1.1rem;}
+.fade-in{animation:fadeIn .5s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.btn-row{display:flex;gap:12px;margin-bottom:14px;}
+button{
+  font-family:inherit;font-size:1.05rem;font-weight:bold;border:none;
+  border-radius:16px;padding:16px;cursor:pointer;color:#fff;
+  transition:transform .1s ease,box-shadow .2s ease,opacity .2s;
+}
+button:active{transform:scale(.95);}
+.roll-btn{flex:2;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 6px 16px rgba(255,154,162,.4);}
+.reset-btn{flex:1;background:linear-gradient(135deg,var(--blue),var(--blue-d));box-shadow:0 6px 16px rgba(111,183,221,.35);}
+.roll-btn:disabled{background:var(--gray);box-shadow:none;cursor:not-allowed;opacity:.7;}
+.toggle-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--card);border-radius:16px;padding:14px 18px;margin-bottom:14px;box-shadow:var(--shadow);
+}
+.toggle-row span{font-size:.95rem;}
+.switch{position:relative;width:52px;height:30px;}
+.switch input{display:none;}
+.slider{position:absolute;inset:0;background:var(--gray);border-radius:30px;transition:.3s;}
+.slider::before{content:"";position:absolute;width:24px;height:24px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s;}
+.switch input:checked+.slider{background:var(--green);}
+.switch input:checked+.slider::before{transform:translateX(22px);}
+.history{font-size:.8rem;color:#a0a0b5;text-align:center;margin-bottom:20px;min-height:1.2em;}
+.editor-toggle{
+  width:100%;background:none;color:var(--blue-d);box-shadow:none;
+  border:2px dashed #cfe4f2;border-radius:14px;font-size:.95rem;
+}
+.editor{display:none;margin-top:14px;background:var(--card);border-radius:18px;padding:18px;box-shadow:var(--shadow);}
+.editor.open{display:block;animation:fadeIn .3s ease;}
+.edit-item{margin-bottom:16px;}
+.edit-item label{display:block;font-size:.85rem;font-weight:bold;color:var(--blue-d);margin-bottom:6px;}
+.edit-item input{
+  width:100%;border:1.5px solid #e6e6ef;border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:.95rem;color:var(--text);margin-bottom:6px;outline:none;
+}
+.edit-item input:focus{border-color:var(--blue);}
+.edit-item .ruby-input{background:#f8fbfe;}
+.save-note{font-size:.75rem;color:#a0a0b5;text-align:center;margin-top:4px;}
+.preview{
+  background:#fbfbfe;border:1.5px solid #eeeef6;border-radius:10px;
+  padding:16px 12px 10px;font-size:1.15rem;line-height:2.2;min-height:2.8em;
+}
+.preview ruby rt{font-size:.5em;color:#9a9ab0;font-weight:normal;}
+.preview-label{font-size:.75rem;color:#a0a0b5;margin:2px 0 4px;}
+.ruby-warn{display:none;font-size:.75rem;color:#e08a8a;margin-top:5px;}
+.auto-panel{background:#f4faff;border:1.5px solid #dcecf8;border-radius:14px;padding:12px 14px;margin-bottom:18px;}
+.cloud-panel{background:#f6fbf8;border:1.5px solid #dcefe4;border-radius:14px;padding:12px 14px;margin-bottom:14px;}
+.cloud-panel .auto-title{color:#5fae86;}
+.cloud-btns{display:flex;gap:8px;margin-top:10px;}
+.cloud-btns .mini-btn{flex:1;background:#7cc6a0;padding:10px;}
+.auto-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.auto-row .auto-title{font-size:.95rem;font-weight:bold;color:var(--blue-d);}
+.auto-status{font-size:.78rem;color:#8a8aa0;margin-top:9px;line-height:1.7;}
+.mini-btn{background:var(--blue-d);color:#fff;font-size:.78rem;font-weight:bold;border-radius:9px;padding:7px 12px;box-shadow:none;}
+.mini-btn:disabled{background:var(--gray);cursor:not-allowed;opacity:.7;}
+.all-btn{width:100%;margin-top:10px;padding:10px;}
+.item-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.item-head label{margin-bottom:0;}
+.lock{display:none;margin-top:12px;background:var(--card);border-radius:16px;padding:16px 18px;box-shadow:var(--shadow);}
+.lock.open{display:block;animation:fadeIn .3s ease;}
+.lock-label{font-size:.9rem;color:var(--blue-d);font-weight:bold;margin-bottom:10px;}
+.lock-row{display:flex;gap:8px;}
+.lock-row input{
+  flex:1;border:1.5px solid #e6e6ef;border-radius:10px;padding:10px 12px;
+  font-family:inherit;font-size:1rem;color:var(--text);outline:none;
+}
+.lock-row input:focus{border-color:var(--blue);}
+.lock-msg{font-size:.8rem;color:#e08a8a;margin-top:8px;min-height:1.1em;}
+.lock-btn{width:100%;margin-top:16px;background:#cfcfd8;padding:10px;}
+</style>
+</head>
+<body>
+<h1>🎲 サイコロトーク</h1>
+<p class="subtitle">サイコロを振って、出た目のお題で話そう！</p>
+
+<div class="container">
+  <div class="stage">
+    <div class="cube" id="cube">
+      <div class="face f1 d1"><div class="pip p1"></div></div>
+      <div class="face f2 d2"><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f3 d3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f4 d4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f5 d5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+      <div class="face f6 d6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div>
+    </div>
+  </div>
+
+  <div class="topic-card">
+    <div class="topic-num" id="topicNum"></div>
+    <div class="topic-text" id="topicText"><span class="topic-placeholder">「振る」を押してね</span></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="roll-btn" id="rollBtn">振る！</button>
+    <button class="reset-btn" id="resetBtn">リセット</button>
+  </div>
+
+  <div class="toggle-row">
+    <span>6回重複なしモード</span>
+    <label class="switch">
+      <input type="checkbox" id="uniqueToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="toggle-row">
+    <span>🔊 効果音</span>
+    <label class="switch">
+      <input type="checkbox" id="soundToggle" checked>
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="history" id="historyText"></div>
+
+  <button class="editor-toggle" id="editorToggle">✏️ お題を編集する</button>
+
+  <div class="lock" id="lockBox">
+    <div class="lock-label">先生用です。合い言葉を入れてください。</div>
+    <div class="lock-row">
+      <input type="password" id="lockInput" autocomplete="off" placeholder="合い言葉">
+      <button class="mini-btn" id="lockBtn">開く</button>
+    </div>
+    <div class="lock-msg" id="lockMsg"></div>
+  </div>
+
+  <div class="editor" id="editor"></div>
+</div>
+
+<script>
+const defaults = [
+  {body:"好きな音楽", ruby:"すきなおんがく"},
+  {body:"好きな給食", ruby:"すきなきゅうしょく"},
+  {body:"校外学習で行きたい場所", ruby:"こうがいがくしゅうでいきたいばしょ"},
+  {body:"前期実習で楽しかった仕事", ruby:"ぜんきじっしゅうでたのしかったしごと"},
+  {body:"友達のいいところ", ruby:"ともだちのいいところ"},
+  {body:"自分の好きな所", ruby:"じぶんのすきなところ"},
+];
+
+let topics = loadTopics();
+let uniqueMode = JSON.parse(localStorage.getItem("dt_unique")||"false");
+let soundOn = JSON.parse(localStorage.getItem("dt_sound")||"true");
+let used = [];
+let rolling = false;
+let localEdited = false;   // この画面でお題をさわったか
+let cloudMsg = "";         // クラウドの状態を伝える文
+
+function loadTopics(){
+  try{
+    const s = JSON.parse(localStorage.getItem("dt_topics"));
+    if(Array.isArray(s)&&s.length===6) return s.map(t=>({
+      body:String((t&&t.body)||""), ruby:String((t&&t.ruby)||"")
+    }));
+  }catch(e){}
+  return JSON.parse(JSON.stringify(defaults));
+}
+// この端末に保存する。あわせて「いつ直したか」も記録し、クラウドにも送る
+function saveTopics(){
+  const stamp=new Date().toISOString();
+  localStorage.setItem("dt_topics",JSON.stringify(topics));
+  localStorage.setItem("dt_updated",stamp);
+  localEdited=true;
+  scheduleCloudSave();
+}
+
+// ----- ふりがなを「漢字の上だけ」に分ける -----
+const KANJI_RE = /[々㐀-䶿一-鿿豈-﫿]/;
+
+// カタカナをひらがなに直す（読み合わせ用。文字数は変わらない）
+function toHira(s){
+  return s.replace(/[ァ-ヶ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+}
+// 本文を「漢字のかたまり」と「それ以外」に切り分ける
+function splitBody(body){
+  const parts=[]; let cur="", curKanji=null;
+  for(const ch of body){
+    const k=KANJI_RE.test(ch);
+    if(curKanji===null||k===curKanji){cur+=ch;curKanji=k;}
+    else{parts.push({text:cur,kanji:curKanji});cur=ch;curKanji=k;}
+  }
+  if(cur!=="") parts.push({text:cur,kanji:curKanji});
+  return parts;
+}
+
+// 本文と読み全体をつき合わせて、漢字のかたまりごとの読みを決める
+// ひらがな・カタカナの部分を目印にして、その間に残った読みを漢字に割りあてる。
+// 分け方が何通りもあるときは「漢字1字はだいたい2音」を目安に、いちばん自然なものを選ぶ
+// （例：昨日の晩ごはん → 「昨日=きのう / 晩=ばん」を選び、「昨日=き / 晩=うのばん」は選ばない）
+function alignRuby(body, ruby){
+  const parts=splitBody(body);
+  if(!parts.some(p=>p.kanji)) return null;      // 漢字がない
+  const hira=toHira(ruby), n=hira.length;
+  let best=null, bestCost=Infinity, steps=0;
+
+  function walk(pi,pos,acc,cost){
+    if(steps++>20000) return;                    // 念のための打ち切り
+    if(cost>=bestCost) return;
+    if(pi===parts.length){
+      if(pos===n){ bestCost=cost; best=acc.slice(); }
+      return;
+    }
+    const p=parts[pi];
+    if(!p.kanji){                                // ひらがな等はそのまま合わせる
+      const lit=toHira(p.text);
+      if(hira.slice(pos,pos+lit.length)!==lit) return;
+      acc.push({text:p.text,rt:""});
+      walk(pi+1,pos+lit.length,acc,cost);
+      acc.pop();
+      return;
+    }
+    let rest=0;                                  // 後ろに最低限必要な文字数
+    for(let k=pi+1;k<parts.length;k++) rest += parts[k].kanji?1:parts[k].text.length;
+    const max=n-pos-rest;
+    for(let len=1;len<=max;len++){
+      acc.push({text:p.text,rt:ruby.slice(pos,pos+len)});
+      walk(pi+1,pos+len,acc,cost+Math.abs(len-2*p.text.length));
+      acc.pop();
+    }
+  }
+  walk(0,0,[],0);
+  return best;                                   // 合わなければ null
+}
+
+function renderRuby(body, ruby){
+  if(!body) return '<span class="topic-placeholder">（お題未設定）</span>';
+  if(!ruby) return escapeHtml(body);
+  // 漢字がないお題は、ふりがなをつけずにそのまま出す
+  if(!splitBody(body).some(p=>p.kanji)) return escapeHtml(body);
+  const parts=alignRuby(body,ruby);
+  // 分けられなかったときは、これまで通り全体にふりがなをつける
+  if(!parts) return '<ruby>'+escapeHtml(body)+'<rt>'+escapeHtml(ruby)+'</rt></ruby>';
+  return parts.map(p=>p.rt
+    ? '<ruby>'+escapeHtml(p.text)+'<rt>'+escapeHtml(p.rt)+'</rt></ruby>'
+    : escapeHtml(p.text)).join("");
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+let audioCtx;
+function getCtx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended") audioCtx.resume();
+  return audioCtx;
+}
+function playRollSound(duration){
+  if(!soundOn) return;
+  const ctx=getCtx(), end=ctx.currentTime+duration;
+  let t=ctx.currentTime, gap=0.045;
+  while(t<end){
+    const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type="square"; o.frequency.value=110+Math.random()*220;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.12,t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.04);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t+0.05);
+    gap=Math.min(gap*1.13,0.4);
+    t+=gap;
+  }
+}
+function playDingSound(){
+  if(!soundOn) return;
+  const ctx=getCtx();
+  [660,990].forEach((f,i)=>{
+    const o=ctx.createOscillator(), g=ctx.createGain(), t=ctx.currentTime+i*0.12;
+    o.type="sine"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.25,t+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+    o.connect(g).connect(ctx.destination);
+    o.start(t); o.stop(t+0.5);
+  });
+}
+
+const faceRot = {
+  1:{x:0,   y:0},
+  2:{x:0,   y:-90},
+  3:{x:0,   y:180},
+  4:{x:0,   y:90},
+  5:{x:-90, y:0},
+  6:{x:90,  y:0}
+};
+
+const cube = document.getElementById("cube");
+const rollBtn = document.getElementById("rollBtn");
+const resetBtn = document.getElementById("resetBtn");
+const topicText = document.getElementById("topicText");
+const topicNum = document.getElementById("topicNum");
+const uniqueToggle = document.getElementById("uniqueToggle");
+const soundToggle = document.getElementById("soundToggle");
+const historyText = document.getElementById("historyText");
+
+function pickNumber(){
+  if(uniqueMode){
+    const remain=[1,2,3,4,5,6].filter(n=>!used.includes(n));
+    return remain[Math.floor(Math.random()*remain.length)];
+  }
+  return Math.floor(Math.random()*6)+1;
+}
+
+const SPIN_MS = 2600;
+
+function roll(){
+  if(rolling) return;
+  const result = pickNumber();
+  if(!result) return;
+  rolling=true;
+  rollBtn.disabled=true;
+  topicNum.textContent="";
+  topicText.innerHTML='<span class="topic-placeholder">…</span>';
+
+  getCtx();
+  playRollSound(SPIN_MS/1000);
+
+  const spinX = 360*4 + faceRot[result].x;
+  const spinY = 360*4 + faceRot[result].y;
+  cube.style.transition="transform "+SPIN_MS+"ms cubic-bezier(.2,.85,.2,1)";
+  cube.style.transform="rotateX("+spinX+"deg) rotateY("+spinY+"deg)";
+
+  setTimeout(()=>{
+    cube.style.transition="none";
+    cube.style.transform="rotateX("+faceRot[result].x+"deg) rotateY("+faceRot[result].y+"deg)";
+    playDingSound();
+    showTopic(result);
+    rolling=false;
+    if(uniqueMode){
+      used.push(result);
+      updateHistory();
+      if(used.length>=6){rollBtn.disabled=true;rollBtn.textContent="出尽くした！";}
+      else rollBtn.disabled=false;
+    }else{
+      rollBtn.disabled=false;
+    }
+  },SPIN_MS);
+}
+
+function showTopic(n){
+  const t=topics[n-1];
+  topicNum.textContent="〜 出た目 "+n+" 〜";
+  topicText.innerHTML=renderRuby(t.body,t.ruby);
+  topicText.classList.remove("fade-in");void topicText.offsetWidth;topicText.classList.add("fade-in");
+}
+
+function reset(){
+  used=[];
+  rollBtn.disabled=false;
+  rollBtn.textContent="振る！";
+  topicNum.textContent="";
+  topicText.innerHTML='<span class="topic-placeholder">「振る」を押してね</span>';
+  updateHistory();
+}
+
+function updateHistory(){
+  historyText.textContent = uniqueMode ? "出た目: "+(used.length>0?used.join(" , "):"なし")+"（"+used.length+"/6）" : "";
+}
+
+rollBtn.addEventListener("click",roll);
+resetBtn.addEventListener("click",reset);
+uniqueToggle.addEventListener("change",()=>{
+  uniqueMode=uniqueToggle.checked;
+  localStorage.setItem("dt_unique",JSON.stringify(uniqueMode));
+  reset();
+});
+soundToggle.addEventListener("change",()=>{
+  soundOn=soundToggle.checked;
+  localStorage.setItem("dt_sound",JSON.stringify(soundOn));
+  if(soundOn){ getCtx(); playDingSound(); }
+});
+
+// ===== ふりがなの自動入力 =====
+// 日本語のじしょ（言葉と読みの一覧）は大きいので、アプリの中には入れず、
+// 必要になったときだけインターネットから読みこむ。授業で振るだけなら使わない。
+const DIC_URL="https://cdn.jsdelivr.net/npm/kuromoji@0.1.2";
+let tokenizer=null;
+let dicState="none";              // none / loading / ready / error
+let autoRuby=JSON.parse(localStorage.getItem("dt_auto")||"true");
+const pendingAuto=new Set();      // じしょ待ちのあいだにさわられたお題
+
+function loadScript(src){
+  return new Promise((ok,ng)=>{
+    const s=document.createElement("script");
+    s.src=src; s.onload=()=>ok(); s.onerror=()=>ng(new Error("読みこめません"));
+    document.head.appendChild(s);
+  });
+}
+
+function prepareDictionary(){
+  if(dicState==="ready"||dicState==="loading") return;
+  dicState="loading"; showDicStatus();
+  (async()=>{
+    try{
+      if(typeof kuromoji==="undefined") await loadScript(DIC_URL+"/build/kuromoji.js");
+      tokenizer=await new Promise((ok,ng)=>{
+        kuromoji.builder({dicPath:DIC_URL+"/dict/"}).build((err,tk)=>err?ng(err):ok(tk));
+      });
+      dicState="ready"; showDicStatus();
+      topics.forEach((t,i)=>{ if(!t.ruby) applyReading(i); });
+      pendingAuto.forEach(i=>applyReading(i));
+      pendingAuto.clear();
+    }catch(e){
+      tokenizer=null; dicState="error"; showDicStatus();
+    }
+  })();
+}
+
+// お題の文から、ひらがなの読みをつくる
+function makeReading(body){
+  if(!tokenizer||!body) return "";
+  try{
+    return tokenizer.tokenize(body).map(t=>toHira(t.reading||t.surface_form)).join("");
+  }catch(e){ return ""; }
+}
+
+// 読みを作って、ふりがな欄に入れる
+function applyReading(i){
+  const t=topics[i];
+  if(!t||!t.body) return;
+  const r=makeReading(t.body);
+  if(!r) return;
+  t.ruby=r;
+  const box=editor.querySelector('input[data-i="'+i+'"][data-k="ruby"]');
+  if(box) box.value=r;
+  saveTopics();
+  updatePreview(i);
+}
+
+// ===== クラウド保存（どの端末でも同じお題にする） =====
+// Supabase（ネット上にデータを預けられるサービス）の「saikoro_topics」という置き場に
+// お題6つをまとめて預ける。ネットが使えないときは、この端末の記録だけで動く。
+const SB_URL="https://sppdtnsvhcuyzndyabco.supabase.co";
+const SB_KEY="sb_publishable_ai4NNF1WEf0ItnRA9U7d3Q_RvAw7GAQ";
+const SB_ROW=SB_URL+"/rest/v1/saikoro_topics?id=eq.1";
+const SB_HEAD={apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":"application/json"};
+
+const toTime=s=>{const t=Date.parse(s||"");return isNaN(t)?0:t;};
+
+function setCloudStatus(msg){
+  cloudMsg=msg;
+  const el=document.getElementById("cloudStatus");
+  if(el) el.textContent=msg;
+}
+
+// クラウドのお題を、この端末と画面に反映する
+function adoptTopics(list,stamp){
+  topics=list.map(t=>({body:String((t&&t.body)||""),ruby:String((t&&t.ruby)||"")}));
+  localStorage.setItem("dt_topics",JSON.stringify(topics));
+  localStorage.setItem("dt_updated",stamp||new Date().toISOString());
+  topics.forEach((t,i)=>{
+    const b=editor.querySelector('input[data-i="'+i+'"][data-k="body"]');
+    const r=editor.querySelector('input[data-i="'+i+'"][data-k="ruby"]');
+    if(b) b.value=t.body;
+    if(r) r.value=t.ruby;
+    updatePreview(i);
+  });
+  reset();
+}
+
+// クラウドを見にいく。向こうが新しければ、そちらに合わせる
+async function cloudSync(manual){
+  setCloudStatus("クラウドを確かめています…");
+  try{
+    const res=await fetch(SB_ROW+"&select=topics,updated_at",{headers:SB_HEAD,cache:"no-store"});
+    if(!res.ok) throw new Error("読めません");
+    const row=(await res.json())[0];
+    const list=row&&row.topics;
+    if(Array.isArray(list)&&list.length===6){
+      const mine=toTime(localStorage.getItem("dt_updated"));
+      if(manual||toTime(row.updated_at)>mine){
+        adoptTopics(list,row.updated_at);
+        setCloudStatus("クラウドのお題を読みこみました。");
+        return;
+      }
+      setCloudStatus("クラウドとそろっています。");
+      return;
+    }
+    // クラウドがまだ空のときは、この端末のお題を預けて出発点にする
+    await cloudSaveNow();
+  }catch(e){
+    setCloudStatus("いまネットにつながらないので、この端末に覚えているお題を使います。");
+  }
+}
+
+// クラウドへ預ける（打ち終わるのを少し待ってから、まとめて送る）
+let cloudTimer=null;
+function scheduleCloudSave(){
+  clearTimeout(cloudTimer);
+  setCloudStatus("クラウドに保存中…");
+  cloudTimer=setTimeout(cloudSaveNow,1200);
+}
+async function cloudSaveNow(){
+  clearTimeout(cloudTimer);
+  let stamp=localStorage.getItem("dt_updated");
+  if(!stamp){ stamp=new Date().toISOString(); localStorage.setItem("dt_updated",stamp); }
+  setCloudStatus("クラウドに保存中…");
+  try{
+    const res=await fetch(SB_ROW,{
+      method:"PATCH",
+      headers:Object.assign({Prefer:"return=minimal"},SB_HEAD),
+      body:JSON.stringify({topics:topics,updated_at:stamp})
+    });
+    if(!res.ok) throw new Error("書けません");
+    const t=new Date();
+    setCloudStatus("クラウドに保存しました（"+String(t.getHours()).padStart(2,"0")+":"+String(t.getMinutes()).padStart(2,"0")+"）");
+  }catch(e){
+    setCloudStatus("ネットにつながらないため、この端末にだけ保存しました。つながったら「クラウドに保存」を押してください。");
+  }
+}
+
+// ===== 編集は先生だけ（合い言葉） =====
+// この合い言葉を変えたいときは、下の「" "」の中の文字を書きかえます。
+// ページの中に書いてあるので、くわしい人には見えてしまいます。
+// ふだん使っているパスワードは絶対に入れないでください。
+const EDIT_PASS="114514";
+let unlocked = localStorage.getItem("dt_unlock")==="1";
+
+const editor=document.getElementById("editor");
+const lockBox=document.getElementById("lockBox");
+const lockInput=document.getElementById("lockInput");
+const lockMsg=document.getElementById("lockMsg");
+
+function openEditor(){
+  lockBox.classList.remove("open");
+  editor.classList.add("open");
+  if(autoRuby) prepareDictionary();
+  if(!localEdited) cloudSync(false);
+}
+
+function tryUnlock(){
+  if(lockInput.value.trim()===EDIT_PASS){
+    unlocked=true;
+    localStorage.setItem("dt_unlock","1");
+    lockInput.value=""; lockMsg.textContent="";
+    openEditor();
+  }else{
+    lockMsg.textContent="合い言葉がちがうようです。";
+    lockInput.select();
+  }
+}
+
+document.getElementById("editorToggle").addEventListener("click",()=>{
+  if(editor.classList.contains("open")){ editor.classList.remove("open"); return; }
+  if(lockBox.classList.contains("open")){ lockBox.classList.remove("open"); return; }
+  if(unlocked){ openEditor(); return; }
+  lockBox.classList.add("open");
+  lockMsg.textContent="";
+  lockInput.focus();
+});
+document.getElementById("lockBtn").addEventListener("click",tryUnlock);
+lockInput.addEventListener("keydown",e=>{ if(e.key==="Enter") tryUnlock(); });
+
+let autoToggle=null, dicStatusEl=null, autoAllBtn=null;
+
+function showDicStatus(){
+  if(!dicStatusEl) return;
+  let msg;
+  if(!autoRuby)                 msg="自動入力は「切」です。ふりがなは手で入力してください。";
+  else if(dicState==="loading") msg="日本語のじしょを読みこんでいます…　初めてのときは少し時間がかかります（10〜30秒くらい）。そのままお待ちください。";
+  else if(dicState==="ready")   msg="準備できました。お題を打つと、ふりがなが自動で入ります。まちがっていたら、ふりがな欄を手で直せます（そのお題の文を変えると、また自動で作り直します）。";
+  else if(dicState==="error")   msg="インターネットにつながらないため、自動ではつけられませんでした。ふりがなは手で入力できます。もう一度ためすときは、上のスイッチを一度「切」にして、また「入」にしてください。";
+  else                          msg="お題を打つと、じしょを読みこんでふりがなを入れます。";
+  dicStatusEl.textContent=msg;
+  if(autoAllBtn) autoAllBtn.disabled = !autoRuby || dicState==="loading";
+}
+
+function buildEditor(){
+  editor.innerHTML="";
+
+  const cloud=document.createElement("div");
+  cloud.className="cloud-panel";
+  cloud.innerHTML=
+    '<div class="auto-row"><span class="auto-title">☁️ クラウド保存（どの端末でも同じお題）</span></div>'+
+    '<div class="auto-status" id="cloudStatus"></div>'+
+    '<div class="cloud-btns">'+
+      '<button class="mini-btn" id="cloudSaveBtn">クラウドに保存</button>'+
+      '<button class="mini-btn" id="cloudLoadBtn">クラウドから読みこむ</button>'+
+    '</div>';
+  editor.appendChild(cloud);
+
+  const panel=document.createElement("div");
+  panel.className="auto-panel";
+  panel.innerHTML=
+    '<div class="auto-row"><span class="auto-title">ふりがなを自動でつける</span>'+
+    '<label class="switch"><input type="checkbox" id="autoToggle"><span class="slider"></span></label></div>'+
+    '<div class="auto-status" id="dicStatus"></div>'+
+    '<button class="mini-btn all-btn" id="autoAllBtn">ぜんぶのふりがなをつけ直す</button>';
+  editor.appendChild(panel);
+
+  topics.forEach((t,i)=>{
+    const div=document.createElement("div");
+    div.className="edit-item";
+    div.innerHTML=
+      '<div class="item-head"><label>出目 '+(i+1)+'</label>'+
+      '<button class="mini-btn" data-auto="'+i+'">自動でつけ直す</button></div>'+
+      '<input type="text" data-i="'+i+'" data-k="body" value="'+escapeHtml(t.body)+'" placeholder="お題（ふつうに漢字で入力）">'+
+      '<input type="text" class="ruby-input" data-i="'+i+'" data-k="ruby" value="'+escapeHtml(t.ruby)+'" placeholder="ふりがな（自動で入ります）">'+
+      '<div class="preview-label">こう表示されます</div>'+
+      '<div class="preview" data-p="'+i+'"></div>'+
+      '<div class="ruby-warn" data-w="'+i+'">※ ふりがなが漢字と合わないので、全体にまとめてつけています。読みを見なおしてください。</div>';
+    editor.appendChild(div);
+  });
+
+  const note=document.createElement("div");
+  note.className="save-note";note.textContent="入力内容は自動保存されます";
+  editor.appendChild(note);
+
+  const lockBtn=document.createElement("button");
+  lockBtn.className="mini-btn lock-btn";
+  lockBtn.textContent="🔒 編集を閉じて、合い言葉をかけ直す";
+  lockBtn.addEventListener("click",()=>{
+    unlocked=false;
+    localStorage.removeItem("dt_unlock");
+    editor.classList.remove("open");
+    document.getElementById("editorToggle").scrollIntoView({block:"center"});
+  });
+  editor.appendChild(lockBtn);
+
+  document.getElementById("cloudStatus").textContent=cloudMsg;
+  document.getElementById("cloudSaveBtn").addEventListener("click",cloudSaveNow);
+  document.getElementById("cloudLoadBtn").addEventListener("click",()=>cloudSync(true));
+
+  autoToggle=document.getElementById("autoToggle");
+  dicStatusEl=document.getElementById("dicStatus");
+  autoAllBtn=document.getElementById("autoAllBtn");
+
+  autoToggle.checked=autoRuby;
+  autoToggle.addEventListener("change",()=>{
+    autoRuby=autoToggle.checked;
+    localStorage.setItem("dt_auto",JSON.stringify(autoRuby));
+    if(autoRuby) prepareDictionary();
+    showDicStatus();
+  });
+  autoAllBtn.addEventListener("click",()=>{
+    if(dicState!=="ready"){ topics.forEach((t,i)=>pendingAuto.add(i)); prepareDictionary(); return; }
+    topics.forEach((t,i)=>applyReading(i));
+  });
+  editor.querySelectorAll("[data-auto]").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const i=Number(b.dataset.auto);
+      if(dicState!=="ready"){ pendingAuto.add(i); prepareDictionary(); return; }
+      applyReading(i);
+    });
+  });
+
+  const timers={};
+  editor.querySelectorAll("input[data-i]").forEach(inp=>{
+    inp.addEventListener("input",e=>{
+      const i=Number(e.target.dataset.i), k=e.target.dataset.k;
+      topics[i][k]=e.target.value;
+      saveTopics();
+      updatePreview(i);
+      // お題の文を変えたら、打ち終わるのを少し待ってから、ふりがなを作り直す
+      if(k==="body"&&autoRuby){
+        clearTimeout(timers[i]);
+        timers[i]=setTimeout(()=>{
+          if(dicState==="ready") applyReading(i);
+          else{ pendingAuto.add(i); prepareDictionary(); }
+        },600);
+      }
+    });
+  });
+
+  topics.forEach((t,i)=>updatePreview(i));
+  showDicStatus();
+}
+
+// 編集画面の「見本」を書きかえる
+function updatePreview(i){
+  const box=editor.querySelector('[data-p="'+i+'"]');
+  const warn=editor.querySelector('[data-w="'+i+'"]');
+  if(!box) return;
+  const t=topics[i];
+  box.innerHTML=renderRuby(t.body,t.ruby);
+  const hasKanji = !!t.body && splitBody(t.body).some(p=>p.kanji);
+  const failed = hasKanji && !!t.ruby && !alignRuby(t.body,t.ruby);
+  if(warn) warn.style.display = failed ? "block" : "none";
+}
+
+uniqueToggle.checked=uniqueMode;
+soundToggle.checked=soundOn;
+buildEditor();
+updateHistory();
+cloudSync(false);   // 開いたときに、クラウドのほうが新しければ合わせる
+</script>
+</body>
+</html>
