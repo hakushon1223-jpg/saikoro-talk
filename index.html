@@ -436,6 +436,16 @@ let dicState="none";              // none / loading / ready / error
 let autoRuby=JSON.parse(localStorage.getItem("dt_auto")||"true");
 const pendingAuto=new Set();      // じしょ待ちのあいだにさわられたお題
 
+// じしょを取りにいく部品には、住所の「//」を「/」に減らしてしまう不具合がある。
+// そのままだと、インターネットに公開したページで行き先をまちがえるので、ここで直しておく。
+(function(){
+  const open=XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open=function(method,url,...rest){
+    if(typeof url==="string") url=url.replace(/^(https?):\/(?!\/)/,"$1://");
+    return open.call(this,method,url,...rest);
+  };
+})();
+
 function loadScript(src){
   return new Promise((ok,ng)=>{
     const s=document.createElement("script");
